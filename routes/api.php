@@ -16,3 +16,9 @@ use Illuminate\Http\Request;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+
+
+Route::post( 'login/register', 'LoginController@register' )->name( 'login.register' );//注册
+Route::post( 'login/login', 'LoginController@login' )->name( 'login.login' );//登录
+Route::post( 'login/updateInfo', 'LoginController@updateInfo' )->name( 'login.updateInfo' );//修改信息
