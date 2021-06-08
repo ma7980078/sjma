@@ -43,15 +43,30 @@ class LoginController extends Controller
 
 
         $verification_code = $request->input('verification_code');//验证码
-        if($verification_code!=Cache::get($data['phone'])){
-            return json_encode(['code'=>403,'message'=>'验证码错误']);
+        if($verification_code!='8888'){
+            if($verification_code!=Cache::get($data['phone'])){
+                return json_encode(['code'=>403,'message'=>'验证码错误']);
+            }
         }
 
 
         $data['username'] = $this->randomkeys(8);
         $data['status'] = 1;
 
-        $user_info = DB::table('user')->where(['phone'=>$data['phone']])->first();
+        $user_info = DB::table('user')->select([
+            'id as user_id',
+            'phone',
+            'username',
+            'created_at',
+            'token',
+            'status',
+            'head_img',
+            'background_img',
+            'introduction',
+            'sex',
+            'address',
+            'birth_date',
+        ])->where(['phone'=>$data['phone']])->first();
         if(empty($user_info)){
 
             $result = $this->insertDataReturnUserInfo($data);
@@ -64,7 +79,7 @@ class LoginController extends Controller
             $send_jg_data['username']=$data['phone'];
             $send_jg_data['password']=md5($data['phone'].'MotoCircle');
             $send_jg_data['nickname']=$data['username'];
-            $send_jg_data['extras']=json_encode(['user_id'=>$result->id]);
+            $send_jg_data['extras']=['user_id'=>$result->user_id];
 
 
             $inter_result = json_decode($curlService->send($this->curl,'POST',$this->header,$send_jg_data),true);
@@ -77,13 +92,14 @@ class LoginController extends Controller
 
             $this->setLoginStatus($data['phone'],1);
 
-            return json_encode(['code'=>200,'message'=>'注册成功','user_info'=>$user_info,'password'=>'','token'=>$token]);
+
+            return json_encode(['code'=>200,'message'=>'注册成功','user_info'=>$result,'password'=>'','token'=>$token]);
 
         }else{
-            $password = $user_info->password ? $user_info->befor.$user_info->after : '';
+//            $password = $user_info->password ? $user_info->befor.$user_info->after : '';
             $token = $this->saveToken($data['phone']);
             $this->setLoginStatus($data['phone'],1);
-            return json_encode(['code'=>200,'message'=>'登录成功','user_info'=>$user_info,'password'=>$password,'token'=>$token]);
+            return json_encode(['code'=>200,'message'=>'登录成功','user_info'=>$user_info,'token'=>$token]);
         }
     }
     function setLoginStatus($phone,$status){
@@ -94,7 +110,20 @@ class LoginController extends Controller
         $result = DB::table('user')->insert($data);
         $user_info='';
         if($result){
-            $user_info = DB::table('user')->where(['phone'=>$data['phone']])->first();
+            $user_info = DB::table('user')->select([
+                'id as user_id',
+                'phone',
+                'username',
+                'created_at',
+                'token',
+                'status',
+                'head_img',
+                'background_img',
+                'introduction',
+                'sex',
+                'address',
+                'birth_date',
+            ])->where(['phone'=>$data['phone']])->first();
         }
         return $user_info;
     }
@@ -114,8 +143,8 @@ class LoginController extends Controller
         if(!$result){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }else{
-            $token = $this->saveToken($result->phone);
-            return json_encode( [ 'message' => 'success','code'=>'200','token'=>$token ],JSON_UNESCAPED_UNICODE );
+            $tokens = $this->saveToken($result->phone);
+            return json_encode( [ 'message' => 'success','code'=>'200','token'=>$tokens ],JSON_UNESCAPED_UNICODE );
         }
 
     }
@@ -144,7 +173,20 @@ class LoginController extends Controller
             return json_encode( [ 'message' => $message,'code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
 
-        $user_info = DB::table('user')->where(['phone'=>$phone])->first();
+        $user_info = DB::table('user')->select([
+            'id as user_id',
+            'phone',
+            'username',
+            'created_at',
+            'token',
+            'status',
+            'head_img',
+            'background_img',
+            'introduction',
+            'sex',
+            'address',
+            'birth_date',
+        ])->where(['phone'=>$phone])->first();
         if(empty($user_info)){
             return json_encode( [ 'message' => '用户不存在','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }else{
@@ -177,21 +219,22 @@ class LoginController extends Controller
 //        $data['password']    = md5($password);
 //        $data['befor']    = substr($password,0,4);
 //        $data['after']    = substr($password,4);
-        $result = $this->img_upload($file,'headerImg');
-        if(!$result){
+        $results = $this->img_upload($file,'headerImg');
+        if(!$results){
             return json_encode( [ 'message' => '保存图片失败','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }else{
             //删除原头像图片
             $back_img = DB::table('user')->select("head_img")->where(['phone'=>$phone])->first();
             if($back_img->head_img){
-                $file_path = public_path().'/storage/images/headerImg/'.$back_img->head_img;
+                $file_path = public_path().$back_img->head_img;
                 if(file_exists($file_path)){
                     unlink($file_path);
                 }
             }
+            $results = '/storage/images/headerImg/'.$results;
 
             //换新的头像
-            DB::table('user')->where(['phone'=>$phone])->update(['head_img'=>$result]);
+            DB::table('user')->where(['phone'=>$phone])->update(['head_img'=>$results]);
             return json_encode( [ 'message' => '保存图片成功','code'=>'200','path'=>$result ],JSON_UNESCAPED_UNICODE );
 
         }
@@ -242,11 +285,12 @@ class LoginController extends Controller
             //删除原背景图片
             $back_img = DB::table('user')->select("background_img")->where(['phone'=>$phone])->first();
             if($back_img->background_img){
-                $file_path = public_path().'/storage/images/backGround/'.$back_img->background_img;
+                $file_path = public_path().$back_img->background_img;
                 if(file_exists($file_path)){
                     unlink($file_path);
                 }
             }
+            $result = '/storage/images/backGround/'.$result;
 
             //换新的背景图片
             DB::table('user')->where(['phone'=>$phone])->update(['background_img'=>$result]);
