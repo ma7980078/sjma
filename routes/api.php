@@ -20,7 +20,6 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 
 
-
 Route::post( 'login/register', 'LoginController@register' )->name( 'login.register' );//注册
 Route::post( 'login/login', 'LoginController@login' )->name( 'login.login' );//登录
 Route::post( 'login/updateHeaderImg', 'LoginController@updateHeaderImg' )->name( 'login.updateHeaderImg' );//修改头像
@@ -37,3 +36,4 @@ Route::post( 'login/getUserInfo', 'LoginController@getUserInfo' )->name( 'login.
 
 
 include base_path( 'routes/ybshui.php' );
+

@@ -22,6 +22,7 @@ class CurlService implements CurlContract
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
         }
+
         $output = curl_exec($ch);
         curl_close($ch);
         return $output;

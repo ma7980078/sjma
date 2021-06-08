@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Services\CurlService;
+
 use \Cache;
 
 class LoginController extends Controller
@@ -27,6 +28,7 @@ class LoginController extends Controller
         $validator = \Validator::make($request->all(), [
             'phone'     =>  'required|mobile',
             'verification_code'  =>  'required'
+
         ], [
             'phone.mobile'=>'电话格式不对',
         ]);
@@ -38,6 +40,7 @@ class LoginController extends Controller
 
 
         $data['phone']    = $request->input('phone');//手机号
+
 
         $verification_code = $request->input('verification_code');//验证码
         if($verification_code!=Cache::get($data['phone'])){
@@ -148,6 +151,7 @@ class LoginController extends Controller
             if( $user_info->password==md5($password) ){
                 $token = $this->saveToken($phone);
                 return json_encode( [ 'message' => '登录成功','code'=>'200','user_info'=>$user_info,'token'=>$token ],JSON_UNESCAPED_UNICODE );
+
             }else{
                 return json_encode( [ 'message' => '密码错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
             }
@@ -211,6 +215,7 @@ class LoginController extends Controller
 
         // 将文件保存到本地 storage/app/public/images 目录下，先判断同名文件是否已经存在，如果存在直接返回
         if (Storage::disk('public')->has($savePath)) {
+
             return  $newFileName;
         }
         // 否则执行保存操作，保存成功将访问路径返回给调用方
@@ -220,6 +225,7 @@ class LoginController extends Controller
         return false;
 
     }
+
     //修改背景图片
     public function backGroundImg(Request $request,CurlService $curlService){
         $token      = $request->input('token');
@@ -425,83 +431,81 @@ class LoginController extends Controller
    文字短信发送demo
    视频短信、弹屏闪信、语音短信、国际短信模板发送与文字短信类似
    */
-public function sendSMS(Request $request){
-    $phone   = $request->input('phone');
-//    echo $request->session()->get('code');die;
+    public function sendSMS(Request $request){
+        $phone   = $request->input('phone');
+    //    echo $request->session()->get('code');die;
 
-    $action='sendtemplate';
-    $url = 'http://www.lokapi.cn/smsUTF8.aspx';
-    $username = '17611512282';
-    $password =strtoupper(md5('17611512282'));
-    $token = '4aa9d601';
-    $templateid = '670D5EDE';
-    $code = rand(1000,9999);
-    Cache::put($phone,$code,1);
+        $action='sendtemplate';
+        $url = 'http://www.lokapi.cn/smsUTF8.aspx';
+        $username = '17611512282';
+        $password =strtoupper(md5('17611512282'));
+        $token = '4aa9d601';
+        $templateid = '670D5EDE';
+        $code = rand(1000,9999);
+        Cache::put($phone,$code,1);
 
-    $param = $phone.'|'.$code;
-    $timestamp = $this->getMillisecond();
-    $sign = strtoupper(md5('action='.$action.'&username='.$username.'&password='.$password.'&token='.$token.'&timestamp='.$timestamp));
-    $postData = array
-    (
-        'action'=>$action,
-        'username'=>$username,
-        'password'=>$password,
-        'token'=>$token,
-        'timestamp'=>$timestamp,
-        'sign'=>$sign,
-        'rece'=>'json',
-        'templateid'=>$templateid,
-        'param'=>$param
-    );
+        $param = $phone.'|'.$code;
+        $timestamp = $this->getMillisecond();
+        $sign = strtoupper(md5('action='.$action.'&username='.$username.'&password='.$password.'&token='.$token.'&timestamp='.$timestamp));
+        $postData = array
+        (
+            'action'=>$action,
+            'username'=>$username,
+            'password'=>$password,
+            'token'=>$token,
+            'timestamp'=>$timestamp,
+            'sign'=>$sign,
+            'rece'=>'json',
+            'templateid'=>$templateid,
+            'param'=>$param
+        );
 
-    $result= json_decode($this->postSMS($url,$postData),true);
-    if($result['returnstatus']=='success'){
-        return json_encode( [ 'message' => '发送成功','code'=>'200' ],JSON_UNESCAPED_UNICODE );
-    }else{
-        return json_encode( [ 'message' => '发送失败','code'=>'401' ],JSON_UNESCAPED_UNICODE );
-    }
-//    var_dump($result) ;
-}
-
-
-
-
-function postSMS($url,$postData)
-{
-    $row = parse_url($url);
-    $host = $row['host'];
-    $port = isset($row['port']) ? $row['port']:80;
-    $file = $row['path'];
-    $post = "";
-    foreach($postData as $k=>$v){
-        $post .= rawurlencode($k)."=".rawurlencode($v)."&";
-    }
-    $post = substr( $post , 0 , -1 );
-    $len = strlen($post);
-    $fp = @fsockopen( $host ,$port, $errno, $errstr, 10);
-    if (!$fp) {
-        return "$errstr ($errno)\n";
-    } else {
-        $receive = '';
-        $out = "POST $file HTTP/1.1\r\n";
-        $out .= "Host: $host\r\n";
-        $out .= "Content-type: application/x-www-form-urlencoded\r\n";
-        $out .= "Connection: Close\r\n";
-        $out .= "Content-Length: $len\r\n\r\n";
-        $out .= $post;
-        fwrite($fp, $out);
-        while (!feof($fp)) {
-            $receive .= fgets($fp, 128);
+        $result= json_decode($this->postSMS($url,$postData),true);
+        if($result['returnstatus']=='success'){
+            return json_encode( [ 'message' => '发送成功','code'=>'200' ],JSON_UNESCAPED_UNICODE );
+        }else{
+            return json_encode( [ 'message' => '发送失败','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        fclose($fp);
-        $receive = explode("\r\n\r\n",$receive);
-        unset($receive[0]);
-        return implode("",$receive);
+    //    var_dump($result) ;
     }
-}
-function getMillisecond() {
-    list($t1, $t2) = explode(' ', microtime());
-    return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
-}
 
+
+
+
+    function postSMS($url,$postData){
+        $row = parse_url($url);
+        $host = $row['host'];
+        $port = isset($row['port']) ? $row['port']:80;
+        $file = $row['path'];
+        $post = "";
+        foreach($postData as $k=>$v){
+            $post .= rawurlencode($k)."=".rawurlencode($v)."&";
+        }
+        $post = substr( $post , 0 , -1 );
+        $len = strlen($post);
+        $fp = @fsockopen( $host ,$port, $errno, $errstr, 10);
+        if (!$fp) {
+            return "$errstr ($errno)\n";
+        } else {
+            $receive = '';
+            $out = "POST $file HTTP/1.1\r\n";
+            $out .= "Host: $host\r\n";
+            $out .= "Content-type: application/x-www-form-urlencoded\r\n";
+            $out .= "Connection: Close\r\n";
+            $out .= "Content-Length: $len\r\n\r\n";
+            $out .= $post;
+            fwrite($fp, $out);
+            while (!feof($fp)) {
+                $receive .= fgets($fp, 128);
+            }
+            fclose($fp);
+            $receive = explode("\r\n\r\n",$receive);
+            unset($receive[0]);
+            return implode("",$receive);
+        }
+    }
+    function getMillisecond() {
+        list($t1, $t2) = explode(' ', microtime());
+        return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
+    }
 }
