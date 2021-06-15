@@ -130,5 +130,53 @@ class UploadFileService
 		
 		return $filename;
 	}
+
+
+    public function img_upload($file,$type){
+        $pathUrls=[];
+        if(is_array($file))
+        {
+            foreach($file as $key=>$v)
+            {
+                if (!$file[$key] || !$file[$key]->isValid()) {
+                    continue;
+                }
+                // 文件扩展名
+                $extension = $file[$key]->getClientOriginalExtension();
+                // 文件名
+                $fileName = $file[$key]->getClientOriginalName();
+                // 生成新的统一格式的文件名
+                $newFileName = md5($fileName . time() . mt_rand(1, 10000)) . '.' . $extension;
+                // 图片保存路径
+                $savePath = '/storage/images/'.$type.'/' . $newFileName;
+
+                // 执行保存操作，保存成功将访问路径返回给调用方
+                if ($file[$key]->storePubliclyAs('images/'.$type, $newFileName, ['disk' => 'public'])) {
+                    array_push($pathUrls,$savePath);
+                }
+            }
+            return $pathUrls;
+        } else {
+            if (!$file->isValid()) {
+                return false;
+            }
+            // 文件扩展名
+            $extension = $file->getClientOriginalExtension();
+            // 文件名
+            $fileName = $file->getClientOriginalName();
+            // 生成新的统一格式的文件名
+            $newFileName = md5($fileName . time() . mt_rand(1, 10000)) . '.' . $extension;
+            // 图片保存路径
+            $savePath = '/storage/images/'.$type.'/' . $newFileName;
+
+            // 执行保存操作，保存成功将访问路径返回给调用方
+            if ($file->storePubliclyAs('images/'.$type, $newFileName, ['disk' => 'public'])) {
+                return  $savePath;
+            }
+        }
+
+        return false;
+
+    }
 }
 

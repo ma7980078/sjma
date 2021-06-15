@@ -35,5 +35,12 @@ Route::post( 'login/updateUserBirthDate', 'LoginController@updateUserBirthDate' 
 Route::post( 'login/getUserInfo', 'LoginController@getUserInfo' )->name( 'login.getUserInfo' );//获取用户详细信息
 
 
+Route::post( 'publishNews/index', 'MoTo\PublishNewsController@index' )->name( 'publishNews.index' );//发布动态
+Route::post( 'publishNews/getCommentInfo', 'MoTo\PublishNewsController@getCommentInfo' )->name( 'publishNews.getCommentInfo' );//获取动态信息
+
+
+
+
+
 include base_path( 'routes/ybshui.php' );
 

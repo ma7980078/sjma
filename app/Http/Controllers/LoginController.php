@@ -66,6 +66,7 @@ class LoginController extends Controller
             'sex',
             'address',
             'birth_date',
+            'compress_size',
         ])->where(['phone'=>$data['phone']])->first();
         if(empty($user_info)){
 
@@ -123,6 +124,7 @@ class LoginController extends Controller
                 'sex',
                 'address',
                 'birth_date',
+                'compress_size',
             ])->where(['phone'=>$data['phone']])->first();
         }
         return $user_info;
@@ -176,6 +178,7 @@ class LoginController extends Controller
         $user_info = DB::table('user')->select([
             'id as user_id',
             'phone',
+            'password',
             'username',
             'created_at',
             'token',
@@ -186,6 +189,7 @@ class LoginController extends Controller
             'sex',
             'address',
             'birth_date',
+            'compress_size',
         ])->where(['phone'=>$phone])->first();
         if(empty($user_info)){
             return json_encode( [ 'message' => '用户不存在','code'=>'401' ],JSON_UNESCAPED_UNICODE );
@@ -210,7 +214,7 @@ class LoginController extends Controller
     //修改用户头像
     public function updateHeaderImg(Request $request,CurlService $curlService){
         $token      = $request->input('token');
-        $phone   = $request->input('phone');
+        $user_id   = $request->input('user_id');
         $file   = $request->file('head_img');
         $result     = $curlService->getToken($token);
         if(!$result){
@@ -224,7 +228,7 @@ class LoginController extends Controller
             return json_encode( [ 'message' => '保存图片失败','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }else{
             //删除原头像图片
-            $back_img = DB::table('user')->select("head_img")->where(['phone'=>$phone])->first();
+            $back_img = DB::table('user')->select("head_img")->where(['id'=>$user_id])->first();
             if($back_img->head_img){
                 $file_path = public_path().$back_img->head_img;
                 if(file_exists($file_path)){
@@ -234,8 +238,8 @@ class LoginController extends Controller
             $results = '/storage/images/headerImg/'.$results;
 
             //换新的头像
-            DB::table('user')->where(['phone'=>$phone])->update(['head_img'=>$results]);
-            return json_encode( [ 'message' => '保存图片成功','code'=>'200','path'=>$result ],JSON_UNESCAPED_UNICODE );
+            DB::table('user')->where(['id'=>$user_id])->update(['head_img'=>$results]);
+            return json_encode( [ 'message' => '保存图片成功','code'=>'200','path'=>$results ],JSON_UNESCAPED_UNICODE );
 
         }
 
@@ -272,8 +276,11 @@ class LoginController extends Controller
     //修改背景图片
     public function backGroundImg(Request $request,CurlService $curlService){
         $token      = $request->input('token');
-        $phone   = $request->input('phone');
+        $user_id   = $request->input('user_id');
         $file   = $request->file('back_img');
+        $data = getimagesize($file);
+        $width = $data[0];
+        $height = $data[1];
         $result_token     = $curlService->getToken($token);
         if(!$result_token){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
@@ -283,7 +290,7 @@ class LoginController extends Controller
             return json_encode( [ 'message' => '保存图片失败','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }else{
             //删除原背景图片
-            $back_img = DB::table('user')->select("background_img")->where(['phone'=>$phone])->first();
+            $back_img = DB::table('user')->select("background_img")->where(['id'=>$user_id])->first();
             if($back_img->background_img){
                 $file_path = public_path().$back_img->background_img;
                 if(file_exists($file_path)){
@@ -293,7 +300,7 @@ class LoginController extends Controller
             $result = '/storage/images/backGround/'.$result;
 
             //换新的背景图片
-            DB::table('user')->where(['phone'=>$phone])->update(['background_img'=>$result]);
+            DB::table('user')->where(['id'=>$user_id])->update(['background_img'=>$result]);
             return json_encode( [ 'message' => '保存图片成功','code'=>'200','path'=>$result ],JSON_UNESCAPED_UNICODE );
 
         }
@@ -319,6 +326,7 @@ class LoginController extends Controller
             'introduction',
             'sex',
             'address',
+            'birth_date_show',
             'birth_date',
         ])->where(['id'=>$user_id])->first();
         if(empty($user_info)){
@@ -336,9 +344,11 @@ class LoginController extends Controller
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
         $phone   = $request->input('phone');
+        $user_id   = $request->input('user_id');
+
         $nickname   = $request->input('nickname');
         $validator = \Validator::make($request->all(), [
-            'phone'     =>  'required',
+            'user_id'     =>  'required',
             'nickname'  =>  'required'
         ]);
 
@@ -357,7 +367,7 @@ class LoginController extends Controller
         if(isset($inter_result[0]['error'])){
             return json_encode(['code'=>@$inter_result[0]['code']['message'],'message'=>@$inter_result[0]['error']['message']]);
         }
-        $result = DB::table('user')->where(['phone'=>$phone])->update(['username'=>$nickname]);
+        $result = DB::table('user')->where(['id'=>$user_id])->update(['username'=>$nickname]);
         if(!$result){
             return json_encode(['code'=>'401','message'=>'修改数据失败']);
         }else{
@@ -372,10 +382,10 @@ class LoginController extends Controller
         if(!$result_token){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        $phone   = $request->input('phone');
+        $user_id   = $request->input('user_id');
         $desc   = $request->input('desc');
         $validator = \Validator::make($request->all(), [
-            'phone'     =>  'required',
+            'user_id'     =>  'required',
             'desc'  =>  'required'
         ]);
 
@@ -383,7 +393,7 @@ class LoginController extends Controller
             $message = array_values($validator->errors()->get('*'))[0][0];
             return json_encode( [ 'message' => $message,'code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        $result = DB::table('user')->where(['phone'=>$phone])->update(['introduction'=>$desc]);
+        $result = DB::table('user')->where(['id'=>$user_id])->update(['introduction'=>$desc]);
         if(!$result){
             return json_encode(['code'=>'401','message'=>'修改数据失败']);
         }else{
@@ -398,10 +408,10 @@ class LoginController extends Controller
         if(!$result_token){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        $phone   = $request->input('phone');
+        $user_id   = $request->input('user_id');
         $sex   = $request->input('sex');
         $validator = \Validator::make($request->all(), [
-            'phone'     =>  'required',
+            'user_id'     =>  'required',
             'sex'  =>  'required'
         ]);
 
@@ -409,7 +419,7 @@ class LoginController extends Controller
             $message = array_values($validator->errors()->get('*'))[0][0];
             return json_encode( [ 'message' => $message,'code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        $result = DB::table('user')->where(['phone'=>$phone])->update(['sex'=>$sex]);
+        $result = DB::table('user')->where(['id'=>$user_id])->update(['sex'=>$sex]);
         if(!$result){
             return json_encode(['code'=>'401','message'=>'修改数据失败']);
         }else{
@@ -424,10 +434,11 @@ class LoginController extends Controller
         if(!$result_token){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        $phone   = $request->input('phone');
-        $address  = $request->input('addresss');
+        $user_id   = $request->input('user_id');
+
+        $address  = $request->input('address');
         $validator = \Validator::make($request->all(), [
-            'phone'     =>  'required',
+            'user_id'     =>  'required',
             'address'  =>  'required'
         ]);
 
@@ -435,7 +446,7 @@ class LoginController extends Controller
             $message = array_values($validator->errors()->get('*'))[0][0];
             return json_encode( [ 'message' => $message,'code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        $result = DB::table('user')->where(['phone'=>$phone])->update(['address'=>$address]);
+        $result = DB::table('user')->where(['id'=>$user_id])->update(['address'=>$address]);
         if(!$result){
             return json_encode(['code'=>'401','message'=>'修改数据失败']);
         }else{
@@ -450,10 +461,12 @@ class LoginController extends Controller
         if(!$result_token){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        $phone   = $request->input('phone');
+        $user_id   = $request->input('user_id');
+
         $birth_date  = $request->input('birth_date');
+        $birth_date_show  = $request->input('birth_date_show');
         $validator = \Validator::make($request->all(), [
-            'phone'     =>  'required',
+            'user_id'     =>  'required',
             'birth_date'  =>  'required'
         ]);
 
@@ -461,7 +474,7 @@ class LoginController extends Controller
             $message = array_values($validator->errors()->get('*'))[0][0];
             return json_encode( [ 'message' => $message,'code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
-        $result = DB::table('user')->where(['phone'=>$phone])->update(['birth_date'=>$birth_date]);
+        $result = DB::table('user')->where(['id'=>$user_id])->update(['birth_date'=>$birth_date,'birth_date_show'=>$birth_date_show]);
         if(!$result){
             return json_encode(['code'=>'401','message'=>'修改数据失败']);
         }else{
@@ -472,7 +485,6 @@ class LoginController extends Controller
 
 
     /*
-   文字短信发送demo
    视频短信、弹屏闪信、语音短信、国际短信模板发送与文字短信类似
    */
     public function sendSMS(Request $request){
