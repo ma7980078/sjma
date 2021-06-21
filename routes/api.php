@@ -37,9 +37,9 @@ Route::post( 'login/getUserInfo', 'LoginController@getUserInfo' )->name( 'login.
 
 Route::post( 'publishNews/index', 'MoTo\PublishNewsController@index' )->name( 'publishNews.index' );//发布动态
 Route::post( 'publishNews/getCommentInfo', 'MoTo\PublishNewsController@getCommentInfo' )->name( 'publishNews.getCommentInfo' );//获取动态信息
-
-
-
+Route::post( 'publishNews/UserPublishNews', 'MoTo\PublishNewsController@UserPublishNews' )->name( 'publishNews.UserPublishNews' );//获取用户关联动态信息
+Route::post( 'publishNews/favoritesNewsList', 'MoTo\PublishNewsController@favoritesNewsList' )->name( 'publishNews.favoritesNewsList' );//获取用户收藏文章
+Route::post( 'publishNews/setUserFavorites', 'MoTo\PublishNewsController@setUserFavorites' )->name( 'publishNews.setUserFavorites' );//用户收藏文章/取消收藏
 
 
 include base_path( 'routes/ybshui.php' );

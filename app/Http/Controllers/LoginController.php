@@ -278,9 +278,7 @@ class LoginController extends Controller
         $token      = $request->input('token');
         $user_id   = $request->input('user_id');
         $file   = $request->file('back_img');
-        $data = getimagesize($file);
-        $width = $data[0];
-        $height = $data[1];
+
         $result_token     = $curlService->getToken($token);
         if(!$result_token){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );

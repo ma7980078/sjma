@@ -134,6 +134,7 @@ class UploadFileService
 
     public function img_upload($file,$type){
         $pathUrls=[];
+        $width_height=[];
         if(is_array($file))
         {
             foreach($file as $key=>$v)
@@ -153,9 +154,11 @@ class UploadFileService
                 // 执行保存操作，保存成功将访问路径返回给调用方
                 if ($file[$key]->storePubliclyAs('images/'.$type, $newFileName, ['disk' => 'public'])) {
                     array_push($pathUrls,$savePath);
+                    list( $width, $height, $type2, $attr )  = getimagesize($file[$key]);
+                    array_push($width_height,[$width,$height]);
                 }
             }
-            return $pathUrls;
+            return [$pathUrls,$width_height];
         } else {
             if (!$file->isValid()) {
                 return false;
@@ -171,7 +174,9 @@ class UploadFileService
 
             // 执行保存操作，保存成功将访问路径返回给调用方
             if ($file->storePubliclyAs('images/'.$type, $newFileName, ['disk' => 'public'])) {
-                return  $savePath;
+                list( $width, $height, $type2, $attr )  = getimagesize($file);
+                array_push($width_height,[$width,$height]);
+                return  [[$savePath],$width_height];
             }
         }
 
