@@ -40,6 +40,11 @@ Route::post( 'publishNews/getCommentInfo', 'MoTo\PublishNewsController@getCommen
 Route::post( 'publishNews/UserPublishNews', 'MoTo\PublishNewsController@UserPublishNews' )->name( 'publishNews.UserPublishNews' );//获取用户关联动态信息
 Route::post( 'publishNews/favoritesNewsList', 'MoTo\PublishNewsController@favoritesNewsList' )->name( 'publishNews.favoritesNewsList' );//获取用户收藏文章
 Route::post( 'publishNews/setUserFavorites', 'MoTo\PublishNewsController@setUserFavorites' )->name( 'publishNews.setUserFavorites' );//用户收藏文章/取消收藏
+Route::post( 'publishNews/comment', 'MoTo\PublishNewsController@comment' )->name( 'publishNews.comment' );//用户评论
+Route::post( 'publishNews/reply', 'MoTo\PublishNewsController@reply' )->name( 'publishNews.comment' );//用户回复
+Route::post( 'publishNews/comment_list', 'MoTo\PublishNewsController@comment_list' )->name( 'publishNews.comment_list' );//评论列表
+Route::post( 'publishNews/reply_list', 'MoTo\PublishNewsController@reply_list' )->name( 'publishNews.reply_list' );//回复列表
+Route::post( 'publishNews/delete', 'MoTo\PublishNewsController@delete' )->name( 'publishNews.delete' );//删除
 
 
 include base_path( 'routes/ybshui.php' );

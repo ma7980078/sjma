@@ -306,11 +306,6 @@ class LoginController extends Controller
 
     //获取用户详细信息
     public function getUserInfo(Request $request,CurlService $curlService){
-        $token      = $request->input('token');
-        $result_token     = $curlService->getToken($token);
-        if(!$result_token){
-            return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
-        }
         $user_id      = $request->input('user_id');
         $user_info = DB::table('user')->select([
             'id',
