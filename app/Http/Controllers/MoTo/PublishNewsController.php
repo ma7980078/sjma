@@ -116,10 +116,17 @@ class PublishNewsController extends Controller
                 'publish_news.comment_reply_num',
                 'brandGood.goodId',
                 'brandGood.brandName',
+                'brandGood.brandId',
+                'brandGood.saleStatus',
                 'brandGood.goodName',
                 'brandGood.maxPrice',
                 'brandGood.minPrice',
                 'brandGood.goodLogo',
+                'brandGood.carDetailLogo',
+                'brandGood.goodType',
+                'brandGood.goodVolume',
+                'brandGood.goodCylinder',
+                'brandGood.goodAbs',
                 'topic.topic',
                 'favorites.user_id as current_uid',
                 'favorites.status',
@@ -133,6 +140,7 @@ class PublishNewsController extends Controller
             ->limit($per_page)
             ->orderBy('publish_news.created_at','DESC')
             ->get()->toArray();
+
 
         foreach($result as $key => $val){
             $result[$key]->goodId = $val->goodId ? $val->goodId : 0;
@@ -153,18 +161,33 @@ class PublishNewsController extends Controller
             if($val->goodId) {
                 $result[$key]->carInfo['goodId']    = $val->goodId;
                 $result[$key]->carInfo['brandName'] = $val->brandName;
+                $result[$key]->carInfo['brandId'] = $val->brandId;
                 $result[$key]->carInfo['goodName']  = $val->goodName;
                 $result[$key]->carInfo['maxPrice']  = $val->maxPrice;
                 $result[$key]->carInfo['minPrice']  = $val->minPrice;
                 $result[$key]->carInfo['goodLogo']  = $val->goodLogo;
+                $result[$key]->carInfo['carDetailLogo']  = $val->carDetailLogo;
+                $result[$key]->carInfo['goodType']  = $val->goodType;
+                $result[$key]->carInfo['goodVolume']  = $val->goodVolume;
+                $result[$key]->carInfo['goodCylinder']  = $val->goodCylinder;
+                $result[$key]->carInfo['goodAbs']  = $val->goodAbs;
+                $result[$key]->carInfo['saleStatus']  = $val->saleStatus;
             }else{
                 unset($result[$key]->goodId);
                 unset($result[$key]->brandName);
+                unset($result[$key]->brandId);
                 unset($result[$key]->goodName);
                 unset($result[$key]->minPrice);
                 unset($result[$key]->minPrice);
                 unset($result[$key]->goodLogo);
+                unset($result[$key]->carDetailLogo);
+                unset($result[$key]->goodType);
+                unset($result[$key]->goodVolume);
+                unset($result[$key]->goodCylinder);
+                unset($result[$key]->goodAbs);
+                unset($result[$key]->saleStatus);
             }
+
             //判断当前用户是否收藏文章
             $result[$key]->is_favorites = $val->current_uid==$current_uid&&$val->status==1 ? 1 :0;
         }

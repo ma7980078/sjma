@@ -22,7 +22,7 @@ class BrandController extends Controller
 	{
 		$input = $request->all();
 		
-		$brand_list = $this->moto_db->table( 'brand' );
+		$brand_list = $this->moto_db->table( 'brand' )->where( 'show', 1 );
 		
 		if ( $input['keyword'] ) {
 			$brand_list = $brand_list->where( 'keywords', 'like', "%{$input['keyword']}%" );
@@ -35,21 +35,20 @@ class BrandController extends Controller
 		$brand_list = $brand_list
 			->get( [ 'brandId', 'aleph', 'brandName', 'brandLogo', 'brandEnergyType' ] )->toArray();
 		
-//		$hot_list = $this->hot_list( 1, 10 );
-		$hot_list = [];
-
+		/*$hot_list = $this->hot_list( 1, 10 );
+		
 		if ( count( $hot_list ) == 0 ) {
 			$hot_list = array_slice( $brand_list, 0, 10 );
 			$hot_id   = array_column( $hot_list, 'brandId' );
 		} else {
 			$hot_id = array_column( $hot_list, 'pid' );
-		}
+		}*/
 		return response( [
 			'code'    => 200,
 			'message' => 'success',
 			'data'    => [
 				'brand_list' => $brand_list,
-				'hot_list'   => $hot_id
+				//'hot_list'   => $hot_id
 			]
 		] );
 	}
@@ -113,14 +112,14 @@ class BrandController extends Controller
 		$list = $list->where( 'brandId', $input['brandId'] )
 			->get()->toArray();
 		
-//		$hot_list = $this->hot_list( 2, 10 );
-        $hot_list = [];
-		if ( count( $hot_list ) == 0 ) {
+		//$hot_list = $this->hot_list( 2, 10 );
+		
+		/*if ( count( $hot_list ) == 0 ) {
 			$hot_list = array_slice( $c_list->get()->toArray(), 0, 10 );
 			$hot_id   = array_column( $hot_list, 'goodId' );
 		} else {
 			$hot_id = array_column( $hot_list, 'pid' );
-		}
+		}*/
 		
 		$brandCulture = $this->moto_db->table( 'brand' )->where( 'brandId', $input['brandId'] )->first( [ 'brandCulture' ] );
 		
@@ -129,8 +128,8 @@ class BrandController extends Controller
 			'message' => 'success',
 			'data'    => [
 				'brand_culture' => $brandCulture->brandCulture,
-				'good_list'    => $list,
-				'hot_list'     => $hot_id
+				'good_list'     => $list,
+				//'hot_list'      => $hot_id
 			]
 		] );
 	}

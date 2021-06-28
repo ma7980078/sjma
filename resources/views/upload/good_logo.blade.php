@@ -11,19 +11,9 @@
         <el-header>上传图片</el-header>
         <el-header>注意（命名格式：<el-tag type="warning">车型_颜色.格式后缀</el-tag> 示例：<el-tag type="warning">Mana 850_黑色_logo.jpeg 或 Mana 850_黑色_细节.jpeg</el-tag>）（支持图片格式：<el-tag type="warning">.jpeg 或 .jpg 或 .png</el-tag>）</el-header>
         <el-main>
-            <el-switch
-                    style="display: block"
-                    v-model="switch_value"
-                    active-color="#13ce66"
-                    inactive-color="#ff4949"
-                    @change="switchChange"
-                    active-text="未细分车型Logo"
-                    inactive-text="细分车型图片">
-            </el-switch>
             <el-upload
-                    action="/moto/upload/file"
+                    action="/moto/upload/file_v2"
                     :auto-upload="false"
-                    :data="opera"
                     :multiple="multiple"
                     name="file"
                     list-type="picture"
@@ -60,10 +50,6 @@
             }
         },
         methods: {
-            switchChange(val) {
-                console.log(val)
-                this.opera.type = val == true ? 'high' : 'low'
-            },
             submitUpload() {
                 this.$refs.upload.submit()
 
@@ -75,7 +61,6 @@
                 console.log(file);
             },
             returnFunc(res) {
-                //console.log(res)
                 if (res.code === 200) {
                     this.$message.success(res.name + ' ' + res.message)
                 } else {

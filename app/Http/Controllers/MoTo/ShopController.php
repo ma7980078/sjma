@@ -56,11 +56,11 @@ class ShopController extends Controller
 			$list = $list->where('city', 'like', "%{$input['city']}%");
 		}
 		
-//		if (isset($input['brandId'])) {
-//			$shop_ids = $this->moto_db->table( 'brand_shop' )->where('brandId', $input['brandId'])->get(['shopId'])->toArray();
-//			$shop_ids = array_column($shop_ids, 'shopId');
-//			$list = $list->whereIn('shopId', $shop_ids);
-//		}
+		if (isset($input['brandId'])) {
+			$shop_ids = $this->moto_db->table( 'brand_shop' )->where('brandId', $input['brandId'])->get(['shopId'])->toArray();
+			$shop_ids = array_column($shop_ids, 'shopId');
+			$list = $list->whereIn('shopId', $shop_ids);
+		}
 		
 		$total = clone $list;
 		$list  = $list->skip( ( $input['page'] - 1 ) * $input['per_page'] )
