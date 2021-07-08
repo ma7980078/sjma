@@ -16,7 +16,7 @@ class GoodController extends Controller
 	
 	public function __construct()
 	{
-		$this->moto_db = DB::connection( 'moto' );
+		$this->moto_db = DB::connection( 'mysql' );
 	}
 	
 	public function good( Request $request, $good_id )

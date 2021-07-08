@@ -7,16 +7,20 @@ use Illuminate\Support\Facades\DB;
 
 class CurlService implements CurlContract
 {
-    public function send( $url,$method,$header=[],$post_data = [] )
+    public function send( $url,$method,$header=[],$post_data = [],$param = [] )
     {
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         if ($method == 'POST') {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([$post_data]));
+            if($param['username']){
+                curl_setopt($ch, CURLOPT_USERPWD, $param['username']);
+            }
         }
         if ($method == 'PUT') {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");

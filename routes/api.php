@@ -45,6 +45,17 @@ Route::post( 'publishNews/reply', 'MoTo\PublishNewsController@reply' )->name( 'p
 Route::post( 'publishNews/comment_list', 'MoTo\PublishNewsController@comment_list' )->name( 'publishNews.comment_list' );//评论列表
 Route::post( 'publishNews/reply_list', 'MoTo\PublishNewsController@reply_list' )->name( 'publishNews.reply_list' );//回复列表
 Route::post( 'publishNews/delete', 'MoTo\PublishNewsController@delete' )->name( 'publishNews.delete' );//删除
+Route::post( 'publishNews/user_comment_list', 'MoTo\PublishNewsController@user_comment_list' )->name( 'publishNews.user_comment_list' );//查询用户被评论被回复列表
+Route::post( 'publishNews/operation_read', 'MoTo\PublishNewsController@operation_read' )->name( 'publishNews.operation_read' );//评论||回复已读状态设置
+Route::post( 'publishNews/delete_comment_or_reply', 'MoTo\PublishNewsController@delete_comment_or_reply' )->name( 'publishNews.delete_comment_or_reply' );//删除评论||回复
+Route::post( 'publishNews/PublishNewsDetail', 'MoTo\PublishNewsController@PublishNewsDetail' )->name( 'publishNews.PublishNewsDetail' );//单篇文章/动态详情
+Route::post( 'publishNews/sendPush', 'MoTo\PublishNewsController@sendPush' )->name( 'publishNews.sendPush' );//APP通知用户
+Route::post( 'publishNews/message_in_comment_list', 'MoTo\PublishNewsController@message_in_comment_list' )->name( 'publishNews.message_in_comment_list' );//在消息页面点击进入文章详情评论区
+
+
+Route::post( 'PersonalInfo/setLike', 'MoTo\PersonalInfoController@setLike' )->name( 'PersonalInfo.setLike' );//点赞
+
+
 
 
 include base_path( 'routes/ybshui.php' );

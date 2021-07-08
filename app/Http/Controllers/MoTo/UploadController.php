@@ -15,7 +15,7 @@ class UploadController extends Controller
 	
 	public function __construct()
 	{
-		$this->moto_db = DB::connection( 'moto' );
+		$this->moto_db = DB::connection( 'mysql' );
 	}
 	
 	public function html()
@@ -85,35 +85,46 @@ class UploadController extends Controller
 		
 		//图片上传，重命名
 		$file_name = $uploadFileService->upload( $name, $tmp_name, public_path() . $path );
-		
+
 		$img = new ImageService();
-		
+
 		$quality  = 50;
 		$_size_kb = $size / 1024;
-		
-		/*$_quality =  ceil((1 - 600 / $_size_kb) * 100);
-		$quality = strtolower( $ext ) == 'png' ? $_quality : (100 - $_quality);*/
-		
-		if ( $_size_kb <= 200 ) {
-			$quality = strtolower( $ext ) == 'png' ? 0 : 100;
-		} else if ( $_size_kb <= 300 && $_size_kb > 200 ) {
-			$quality = strtolower( $ext ) == 'png' ? 20 : 80;
-		} else if ( $_size_kb < 500 && $_size_kb > 300 ) {
-			$quality = strtolower( $ext ) == 'png' ? 35 : 65;
-		} else if ( $_size_kb >= 500 ) {
-			$quality = 50;
+
+
+		if ( $_size_kb >= 1000 ) {
+			$quality = strtolower( $ext ) == 'png' ? 60 : 40;
 		}
-		
+
 		$img->load( public_path() . $path . $file_name )
-			//			->size( $size, $size )//设置生成图片的宽度和高度
-			->fixed_given_size( true )//生成的图片是否以给定的宽度和高度为准
+//            ->size( 800, 600 )//设置生成图片的宽度和高度
+            ->fixed_given_size( true )//生成的图片是否以给定的宽度和高度为准
 			->keep_ratio( true )//是否保持原图片的原比例
 			->rotate( 0 )//指定旋转的角度
-			->bg_color( "#ffffff" )//设置背景颜色，按照rgb格式
-			->quality( $quality )//设置生成图片的质量 0-100，如果生成的图片格式为png格式，数字越大，压缩越大，如果是其他格式，如jpg，gif，数组越小，压缩越大
+//			->bg_color( "#ffffff" )//设置背景颜色，按照rgb格式
+			->quality( $quality )//设置生成图片的质量 0-100，如果生成的图片格式为png格式，数字越大，压缩越大，如果是其他格式，如jpg，gif，数字越小，压缩越大
 			->save( public_path() . $path . $file_name );    //保存生成图片的路径
-		
+
 		$res = $this->saveDetailImage( $path, $name, $cid, $image_type, $color );
+		//压缩宽高图片
+        $MD5 = substr( md5(  microtime() ), 0, 16 ). "." . $ext;
+//        $thumbnails = new ThumbnailsService(public_path() . $path . $file_name,public_path() . $path);
+//        $thumbnails->compressImage(500, 500, true);//压缩宽度、压缩高度、是否保存
+//        $thumbnails->showImage();die;
+
+        if ( $_size_kb >= 50 ) {
+            $quality = strtolower( $ext ) == 'png' ? 30 : 70;
+        }
+        $img->load( public_path() . $path . $file_name )
+            ->size( 200, 160 )//设置生成图片的宽度和高度
+            ->fixed_given_size( true )//生成的图片是否以给定的宽度和高度为准
+            ->keep_ratio( true )//是否保持原图片的原比例
+            ->rotate( 0 )//指定旋转的角度
+//            ->bg_color( "#ffffff" )//设置背景颜色，按照rgb格式
+            ->quality( $quality )//设置生成图片的质量 0-100，如果生成的图片格式为png格式，数字越大，压缩越大，如果是其他格式，如jpg，gif，数组越小，压缩越大
+            ->save( public_path() . $path . $MD5 );    //保存生成图片的路径
+
+        $res = $this->saveDetailImage( $path, $MD5, $cid, $image_type.'_thumbnail', $color );
 		
 		$this->insertDB( [
 			'type'     => 'logo',
@@ -176,7 +187,7 @@ class UploadController extends Controller
 		$ext = 'jpg';
 		
 		$name = substr( md5( $file_arr[0] . microtime() ), 0, 16 ) . "." . $ext;
-		
+
 		$path = "/image/good/" . date( 'Y/m/d' ) . "/";
 		
 		//图片上传，重命名
@@ -334,11 +345,11 @@ class UploadController extends Controller
 		
 		$quality = strtolower( $ext ) == 'png' ? 0 : 100;
 		$name    = substr( md5( $file_arr[0] . microtime() ), 0, 16 ) . "." . $ext;
-		$img->load( public_path() . '/good_logo_bg.jpg' )
-			->size( 300, 300 )//设置生成图片的宽度和高度
+        //            ->load( public_path() . '/good_logo_bg.jpg' )
+        $img->size( 200, 160 )//设置生成图片的宽度和高度
 			->fixed_given_size( true )//生成的图片是否以给定的宽度和高度为准
 			->keep_ratio( true )//是否保持原图片的原比例
-			//->bg_color( "#ffffff" )//设置背景颜色，按照rgb格式
+			->bg_color( "#ffffff" )//设置背景颜色，按照rgb格式
 			->set_watermark( $watermark )
 			->rotate( 0 )//指定旋转的角度
 			->quality( $quality )//设置生成图片的质量 0-100，如果生成的图片格式为png格式，数字越大，压缩越大，如果是其他格式，如jpg，gif，数组越小，压缩越大
@@ -387,10 +398,10 @@ class UploadController extends Controller
 		}
 		
 		$gid = $good_service->getGoodIdByName( $car_name )->goodId;
-		
+
 		$old_path = $this->moto_db->table( 'brandGood' )->where( 'goodId', $gid )->first( [ $update_field ] );
 		$old_path = (array)$old_path;
-		if ( file_exists( public_path( $old_path[$update_field] ) ) ) {
+		if (!empty($old_path[$update_field]) && file_exists( public_path( $old_path[$update_field] ) ) ) {
 			unlink( public_path( $old_path[$update_field] ) );
 		}
 		

@@ -11,7 +11,7 @@ class GoodsService
 	
 	public function __construct()
 	{
-		$this->moto_db = DB::connection( 'moto' );
+		$this->moto_db = DB::connection( 'mysql' );
 	}
 	
 	public function getCatIdByName( $name )

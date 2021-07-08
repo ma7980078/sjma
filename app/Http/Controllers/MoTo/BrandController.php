@@ -15,26 +15,26 @@ class BrandController extends Controller
 	
 	public function __construct()
 	{
-		$this->moto_db = DB::connection( 'moto' );
+		$this->moto_db = DB::connection( 'mysql' );
 	}
 	
 	public function brand( Request $request )
 	{
-		$input = $request->all();
-		
-		$brand_list = $this->moto_db->table( 'brand' )->where( 'show', 1 );
-		
-		if ( $input['keyword'] ) {
+
+        $input = $request->all();
+
+        $brand_list = $this->moto_db->table( 'brand' )->where( 'show', 1 );
+
+		if ( @$input['keyword'] ) {
 			$brand_list = $brand_list->where( 'keywords', 'like', "%{$input['keyword']}%" );
 		}
 		
-		if ( $input['brandEnergyType'] ) {
+		if ( @$input['brandEnergyType'] ) {
 			$brand_list = $brand_list->where( 'brandEnergyType', $input['brandEnergyType'] );
 		}
 		
 		$brand_list = $brand_list
 			->get( [ 'brandId', 'aleph', 'brandName', 'brandLogo', 'brandEnergyType' ] )->toArray();
-		
 		/*$hot_list = $this->hot_list( 1, 10 );
 		
 		if ( count( $hot_list ) == 0 ) {

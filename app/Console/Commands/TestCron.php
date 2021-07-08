@@ -29,7 +29,7 @@ class TestCron extends Command
     public function __construct()
     {
         parent::__construct();
-	    $this->moto_db = DB::connection( 'moto' );
+	    $this->moto_db = DB::connection( 'mysql' );
     }
 
     /**

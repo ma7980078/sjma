@@ -15,7 +15,7 @@ class CarsController extends Controller
 	
 	public function __construct()
 	{
-		$this->moto_db = DB::connection( 'moto' );
+		$this->moto_db = DB::connection( 'mysql' );
 	}
 	
 	public function car_list()
@@ -55,9 +55,9 @@ class CarsController extends Controller
 			$goods = array_column( $goods, null, 'carId' );
 			$cids  = [ $cid ];
 		}
-		$column = [ 'cid', 'color', 'overview', 'details', 'official' ];
+		$column = [ 'cid', 'color', 'overview', 'details', 'official', 'overview_thumbnail', 'details_thumbnail', 'official_thumbnail' ];
 		if ( $type != '' ) {
-			$column = [ 'cid', 'color', $type ];
+			$column = [ 'cid', 'color', $type,$type.'_thumbnail' ];
 		}
 		
 		$car_list = $db->whereIn( 'cid', $cids )->get( $column )->toArray();
@@ -68,6 +68,7 @@ class CarsController extends Controller
 					'name'   => $goods[$item->cid]->goodsCarName ?? '',
 					'color'  => $item->color,
 					'images' => !is_null( $item->$type ) && $item->$type != '' ? explode( ',', $item->$type ) : [],
+					'thumbnails' => !is_null( $item->{$type.'_thumbnail'} ) && $item->{$type.'_thumbnail'} != '' ? explode( ',', $item->{$type.'_thumbnail'} ) : NULL,
 				];
 			} else {
 				$car_list[$key] = [
@@ -76,6 +77,9 @@ class CarsController extends Controller
 					'overview_images' => !is_null( $item->overview ) && $item->overview != '' ? explode( ',', $item->overview ) : '',
 					'details_images'  => !is_null( $item->details ) && $item->details != '' ? explode( ',', $item->details ) : [],
 					'official_images' => !is_null( $item->official ) && $item->official != '' ? explode( ',', $item->official ) : [],
+                    'overview_thumbnail' => !is_null( $item->overview_thumbnail ) && $item->overview_thumbnail != '' ? explode( ',', $item->overview_thumbnail ) : '',
+                    'details_thumbnail'  => !is_null( $item->details_thumbnail ) && $item->details_thumbnail != '' ? explode( ',', $item->details_thumbnail ) : [],
+                    'official_thumbnail' => !is_null( $item->official_thumbnail ) && $item->official_thumbnail != '' ? explode( ',', $item->official_thumbnail ) : [],
 				];
 			}
 			
