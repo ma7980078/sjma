@@ -453,7 +453,8 @@ class PublishNewsController extends Controller
                 'user.head_img',
             ])
             ->leftJoin('user','comment.from_userid','=','user.id')
-            ->where(['publish_id'=>$publish_id])
+            ->where(['comment.publish_id'=>$publish_id])
+            ->orderByRaw(DB::raw("FIELD(comment.id,".$comment_id.") desc"))
             ->offset($per_page * ( $page - 1 ))
             ->limit($per_page)
             ->get()
@@ -517,8 +518,10 @@ class PublishNewsController extends Controller
         $per_page   = (int)$request->input( 'per_page', 10 );
         $page       = (int)$request->input( 'page', 1 );
         //当前用户被评论信息
-        $result['comment'] = DB::table('comment')
+        $comment_sql = DB::table('comment')
             ->select([
+                'reply.id as current_reply_id',
+                'reply.reply_id as pre_reply_id',
                 'comment.id as comment_id',
                 'comment.is_read',
                 'comment.is_hide',
@@ -531,40 +534,47 @@ class PublishNewsController extends Controller
                 'user.head_img',
             ])
             ->leftJoin('user','comment.from_userid','=','user.id')
+            ->leftJoin('reply',function($join){
+                $join->on('reply.from_userid','=','user.id')->on('reply.comment_id','=','comment.id');
+            })
             ->leftJoin('publish_news','comment.publish_id','=','publish_news.id')
-            ->where(['publish_news.user_id'=>$user_id])
-            ->where('comment.from_userid','!=',$user_id)
-            ->orderBy('created_at','desc')
-            ->offset($per_page * ( $page - 1 ))
-            ->limit($per_page)
-            ->get()
-            ->toArray();
-        //当前用户被回复信息
-        $result['reply'] = DB::table('reply')
-            ->select([
-                'reply.id as current_reply_id',
-                'reply.reply_id as pre_reply_id',
-                'reply.publish_type',
-                'reply.comment_id',
-                'reply.is_hide',
-                'reply.publish_id',
-                'reply.is_read',
-                'reply.content',
-                'reply.created_at',
-                'user.id as user_id as reply_user_id',
-                'user.username',
-                'user.head_img',
-            ])
-            ->leftJoin('user','reply.from_userid','=','user.id')
-            ->where(['reply.to_userid'=>$user_id])
-            ->where('reply.from_userid','!=',$user_id)
-            ->offset($per_page * ( $page - 1 ))
-            ->limit($per_page)
-            ->get()
-            ->toArray();
-        $data = array_merge($result['comment'],$result['reply']);
+            ->where(function ($query) use ($user_id) {
+                    $query->where('publish_news.user_id','=',$user_id);
+                    $query->where('comment.from_userid','!=',$user_id);
+            });
 
-        return json_encode( [ 'message' => 'success','code'=>'200', 'data'=>$data, 'total'=>count($result['comment'])+count($result['reply']) ],JSON_UNESCAPED_UNICODE );
+
+            $result = DB::table('reply')
+                ->select([
+                    'reply.id as current_reply_id',
+                    'reply.reply_id as pre_reply_id',
+                    'reply.comment_id',
+                    'reply.is_read',
+                    'reply.is_hide',
+                    'reply.publish_type',
+                    'reply.publish_id',
+                    'reply.content',
+                    'reply.created_at',
+                    'user.id as user_id',
+                    'user.username',
+                    'user.head_img',
+                ])
+                ->leftJoin('user','reply.from_userid','=','user.id')
+                ->leftJoin('publish_news','reply.publish_id','=','publish_news.id')
+                ->where('publish_news.user_id','=',$user_id)
+                ->Orwhere(function ($query) use ($user_id) {
+                    $query->where('reply.from_userid','!=',$user_id);
+                    $query->where('reply.to_userid','=',$user_id);
+                })
+                ->union($comment_sql)
+                ->orderBy('created_at','DESC')
+                ->offset($per_page * ( $page - 1 ))
+                ->limit($per_page)
+                ->get()
+                ->toArray();
+
+
+        return json_encode( [ 'message' => 'success','code'=>'200', 'data'=>$result, 'total'=>count($result) ],JSON_UNESCAPED_UNICODE );
     }
 
     //评论||回复已读状态设置

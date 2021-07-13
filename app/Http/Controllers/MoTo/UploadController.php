@@ -9,6 +9,7 @@ use App\Services\UploadFileService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use DB;
+use App\Services\CurlService;
 
 class UploadController extends Controller
 {
@@ -43,7 +44,7 @@ class UploadController extends Controller
 		return view( 'upload.detail_html', [ 'list' => $list ] );
 	}
 	
-	public function detail_img( Request $request, UploadFileService $uploadFileService )
+	public function detail_img( Request $request, UploadFileService $uploadFileService, CurlService $curlService)
 	{
 		$all_type = [ 'image/jpeg', 'image/gif', 'image/png' ];
 		
@@ -95,6 +96,8 @@ class UploadController extends Controller
 		if ( $_size_kb >= 1000 ) {
 			$quality = strtolower( $ext ) == 'png' ? 60 : 40;
 		}
+		$post_data = [];
+        $curlService->send('','POST','Content-Type: application/json',$post_data);
 
 		$img->load( public_path() . $path . $file_name )
 //            ->size( 800, 600 )//设置生成图片的宽度和高度
