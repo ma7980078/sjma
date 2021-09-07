@@ -18,7 +18,7 @@ Route::group( [
 	Route::get( '/cars/list', 'MoTo\CarsController@car_list' )->name('moto.cars.car_list');
 	Route::post( '/cars/image', 'MoTo\CarsController@car_image' )->name('moto.cars.car_image');
 	
-	Route::post( '/shop/list', 'MoTo\ShopController@list' )->name('moto.shop.list');
+	Route::match( [ 'GET', 'POST' ],'/shop/list', 'MoTo\ShopController@list' )->name('moto.shop.list');
 });
 
 

@@ -18,7 +18,6 @@
                     name="file"
                     list-type="picture"
                     header="multipart/form-data"
-                    accept="image/jpeg,image/png,image/gif"
                     class="upload-demo"
                     ref="upload"
                     :on-preview="handlePreview"

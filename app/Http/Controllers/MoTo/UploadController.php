@@ -26,6 +26,7 @@ class UploadController extends Controller
 	
 	public function good_logo_v2()
 	{
+//	    echo phpinfo();die;
 		return view( 'upload.good_logo' );
 	}
 	
@@ -96,8 +97,6 @@ class UploadController extends Controller
 		if ( $_size_kb >= 1000 ) {
 			$quality = strtolower( $ext ) == 'png' ? 60 : 40;
 		}
-		$post_data = [];
-        $curlService->send('','POST','Content-Type: application/json',$post_data);
 
 		$img->load( public_path() . $path . $file_name )
 //            ->size( 800, 600 )//设置生成图片的宽度和高度
@@ -271,7 +270,6 @@ class UploadController extends Controller
 	
 	public function file_v2( Request $request, UploadFileService $uploadFileService )
 	{
-		$all_type = [ 'image/jpeg', 'image/gif', 'image/png' ];
 		
 		$file_type = $_FILES['file']["type"];
 		
@@ -288,14 +286,7 @@ class UploadController extends Controller
 				'name'    => $_FILES['file']['name']
 			] );
 		}
-		
-		if ( !$uploadFileService->checkType( $file_type, $all_type ) ) {
-			return response( [
-				'code'    => -1,
-				'message' => '文件类型错误',
-				'name'    => $_FILES['file']['name']
-			] );
-		}
+
 		
 		$file_arr = explode( '.', $_FILES['file']['name'] );
 		
@@ -400,7 +391,7 @@ class UploadController extends Controller
 			$car_name = $file_info;
 		}
 		
-		$gid = $good_service->getGoodIdByName( $car_name )->goodId;
+		$gid = @$good_service->getGoodIdByName( $car_name )->goodId;
 
 		$old_path = $this->moto_db->table( 'brandGood' )->where( 'goodId', $gid )->first( [ $update_field ] );
 		$old_path = (array)$old_path;

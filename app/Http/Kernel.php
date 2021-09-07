@@ -17,7 +17,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
-        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+//        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,//注释掉是想input接收参数时使用默认值
         \App\Http\Middleware\TrustProxies::class,
     ];
 
@@ -38,7 +38,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'throttle:60,1',
+            'throttle:120,1',
             'bindings',
             \Illuminate\Session\Middleware\StartSession::class,
         ],

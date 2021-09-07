@@ -7,31 +7,91 @@ use Illuminate\Support\Facades\DB;
 
 class CurlService implements CurlContract
 {
-    public function send( $url,$method,$header=[],$post_data = [],$param = [] )
+    public function send( $url,$method,$header=[],$post_data = [],$param = [])
     {
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        if ($method == 'POST') {
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([$post_data]));
-            if($param['username']){
-                curl_setopt($ch, CURLOPT_USERPWD, $param['username']);
-            }
+        if(!empty($header)){
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         }
-        if ($method == 'PUT') {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
+        if(isset($param['username'])){
+            curl_setopt($ch, CURLOPT_POSTFIELDS,  json_encode($post_data));
+            curl_setopt($ch, CURLOPT_USERPWD, $param['username']);
+        }else{
+            curl_setopt($ch, CURLOPT_POSTFIELDS,  json_encode([$post_data]));
         }
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 60000);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 60000);
+        $content = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+//        var_dump($code);die;
 
-        $output = curl_exec($ch);
+        if(!$code){
+            echo 'Curl error: ' . curl_error($ch);die;
+        }
         curl_close($ch);
-        return $output;
+        return $content;
 
     }
+    public function send_img( $url,$method,$header=[],$post_data = [])
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        if(!empty($header)){
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+        }
+
+        curl_setopt($ch, CURLOPT_POSTFIELDS,  http_build_query($post_data));
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 60000);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 60000);
+        $content = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+//        var_dump($code);die;
+
+        if(!$code){
+            echo 'Curl error: ' . curl_error($ch);die;
+        }
+        curl_close($ch);
+        return $content;
+
+    }
+//    public function send( $url,$method,$header=[],$post_data = [],$param = [] )
+//    {
+//
+//        $ch = curl_init();
+//        curl_setopt($ch, CURLOPT_URL, $url);
+//        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+//        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+//        if ($method == 'POST') {
+//            curl_setopt($ch, CURLOPT_POST, 1);
+//            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([$post_data]));
+//            if(isset($param['username'])){
+//
+//                curl_setopt($ch, CURLOPT_USERPWD, $param['username']);
+//            }
+//        }
+//        if ($method == 'PUT') {
+//            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+//            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post_data));
+//        }
+//
+//        $output = curl_exec($ch);
+//        if(!$output){
+//            echo 'Curl error: ' . curl_error($ch);die;
+//        }
+//        curl_close($ch);
+//        return $output;
+//
+//    }
     public function getToken($token){
         $token = DB::table('user')->where(['token'=>$token])->first();
         return $token;

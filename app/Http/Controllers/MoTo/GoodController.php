@@ -22,7 +22,7 @@ class GoodController extends Controller
 	public function good( Request $request, $good_id )
 	{
 //		$list = $this->moto_db->table( 'carList' )->leftJoin( 'car_image', 'carList.carId', '=', 'car_image.cid' )->where( 'goodId', $good_id )->get()->toArray();
-		$list = $this->moto_db->table( 'carList' )->where( 'goodId', $good_id )->get()->toArray();
+		$list = $this->moto_db->table( 'carList' )->where( 'goodId', $good_id )->orderBy("carName","desc")->get()->toArray();
 
 		$res = [];
 		foreach ( $list as $item ) {

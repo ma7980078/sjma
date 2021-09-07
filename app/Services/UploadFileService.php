@@ -105,17 +105,6 @@ class UploadFileService
 	public function upload( $filename, $tmp_name, $path )
 	{
 		
-		$fileExtensions = [
-			'.png',
-			'.jpeg',
-			'.jpg',
-			'.gif',
-		];
-		
-		if ( !in_array( strtolower( strstr( $filename, "." ) ), $fileExtensions ) ) {
-			exit();
-		}
-		
 		$file_path = $path . $filename;
 		// 判断当前的目录是否存在，若不存在就新建一个!
 		if ( !is_dir( $path ) ) {
@@ -127,7 +116,7 @@ class UploadFileService
 			//此函数只支持 HTTP POST 上传的文件
 			move_uploaded_file( $tmp_name, $file_path );
 		}
-		
+
 		return $filename;
 	}
 
@@ -149,7 +138,7 @@ class UploadFileService
                 // 生成新的统一格式的文件名
                 $newFileName = md5($fileName . time() . mt_rand(1, 10000)) . '.' . $extension;
                 // 图片保存路径
-                $savePath = '/storage/images/'.$type.'/' . $newFileName;
+                $savePath = '/storage/images/'.$type . $newFileName;
 
                 // 执行保存操作，保存成功将访问路径返回给调用方
                 if ($file[$key]->storePubliclyAs('images/'.$type, $newFileName, ['disk' => 'public'])) {
@@ -170,7 +159,7 @@ class UploadFileService
             // 生成新的统一格式的文件名
             $newFileName = md5($fileName . time() . mt_rand(1, 10000)) . '.' . $extension;
             // 图片保存路径
-            $savePath = '/storage/images/'.$type.'/' . $newFileName;
+            $savePath = '/storage/images/'.$type . $newFileName;
 
             // 执行保存操作，保存成功将访问路径返回给调用方
             if ($file->storePubliclyAs('images/'.$type, $newFileName, ['disk' => 'public'])) {
@@ -182,6 +171,51 @@ class UploadFileService
 
         return false;
 
+    }
+
+    public function video_upload($file,$type){
+        $pathUrls=[];
+        $width_height=[];
+        if (!$file->isValid()) {
+            return false;
+        }
+        // 文件扩展名
+        $extension = $file->getClientOriginalExtension();
+        // 文件名
+        $fileName = $file->getClientOriginalName();
+        // 生成新的统一格式的文件名
+        $newFileName = md5($fileName . time() . mt_rand(1, 10000)) . '.' . $extension;
+        // 图片保存路径
+        $savePath = '/storage/images/'.$type.'/' . $newFileName;
+
+        // 执行保存操作，保存成功将访问路径返回给调用方
+        if ($file->storePubliclyAs('images/'.$type, $newFileName, ['disk' => 'public'])) {
+            list( $width, $height, $type2, $attr )  = getimagesize($file);
+            array_push($width_height,[$width,$height]);
+            return  [[$savePath],$width_height];
+        }
+        return false;
+    }
+
+    public function driver_license_upload($file,$type){
+        if (!$file->isValid()) {
+            return false;
+        }
+        // 文件扩展名
+        $extension = $file->getClientOriginalExtension();
+        // 文件名
+        $fileName = $file->getClientOriginalName();
+        // 生成新的统一格式的文件名
+        $newFileName = md5($fileName . time() . mt_rand(1, 10000)) . '.' . $extension;
+        // 图片保存路径
+        $savePath = '/storage/images/'.$type.'/' . $newFileName;
+
+        // 执行保存操作，保存成功将访问路径返回给调用方
+        if ($file->storePubliclyAs('images/'.$type, $newFileName, ['disk' => 'public'])) {
+//            list( $width, $height, $type2, $attr )  = getimagesize($file);
+            return  $savePath;
+        }
+        return false;
     }
 }
 

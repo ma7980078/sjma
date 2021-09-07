@@ -70,7 +70,9 @@ class ShopController extends Controller
 		foreach ( $list as $key => $item ) {
 			$list[$key]->distance = $this->distance( $client_lat, $client_lon, $item->latitude, $item->longitude );
 		}
-		
+        $cmf_arr = array_column($list, 'distance');
+        array_multisort($cmf_arr, SORT_ASC, $list);
+
 		return response( [
 			'code'    => 200,
 			'message' => 'success',
