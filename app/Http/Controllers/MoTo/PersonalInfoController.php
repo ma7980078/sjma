@@ -185,12 +185,13 @@ class PersonalInfoController extends Controller
                 });
                 break;
             case 'shop'://经销商搜索
-                $result = DB::table("shop")
+                $results = DB::table("shop")
                     ->where('shopName','like',"%{$keyword}%")
                     ->offset($per_page * ( $page - 1 ))
                     ->limit($per_page)
                     ->get()
                     ->toArray();
+                return json_encode(['code'=>200,'data'=>$results]);
                 break;
         }
 
@@ -333,6 +334,7 @@ class PersonalInfoController extends Controller
             if($data['status'] == 1){//关注
 
                 $data['mutual'] = 1;
+
                 //关注时要把对方的那一条数据的互关字段也改成1
                 $flag = 1;
 
@@ -349,6 +351,10 @@ class PersonalInfoController extends Controller
         }
 
         $data['user_id'] = $result_token->id;
+        //每次重新关注时把状态都设置成未读状态
+        if($data['status'] == 1){
+            $data['is_read'] = 0;
+        }
         $result = DB::table('follow')->updateOrInsert([
             'followed_user_id'   =>  $data['followed_user_id'],
             'user_id'   =>  $data['user_id'],
@@ -365,6 +371,45 @@ class PersonalInfoController extends Controller
         }else{
             return json_encode(['code'=>200,'message'=>'成功']);
         }
+    }
+
+    //消息列表的关注
+    public function message_follow_list(Request $request, CurlService $curlService){
+        $token                       = $request->input('token');
+        $per_page                    = (int)$request->input( 'per_page', 10 );
+        $page                        = (int)$request->input( 'page', 1 );
+        $result_token                = $curlService->getToken($token);
+
+        if($token && !$result_token){
+            return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
+        }
+        $select_userid = $result_token ? $result_token->id : 0;
+        $result = DB::table('follow')
+            ->select([
+                'user.id as user_id',
+                'user.username',
+                'user.head_img',
+                'user.authen_status',
+                'user.authen_car_name',
+                'user.authen_brand_log',
+                'follow.id',
+                'follow.is_read',
+                'follow.is_hide',
+                'follow.mutual as is_mutual',
+            ])
+            ->leftJoin( 'user', 'follow.user_id', '=', 'user.id' )
+            ->where('follow.user_id','!=',$select_userid)
+            ->where('follow.followed_user_id','=',$select_userid)
+            ->where('follow.status','=',1)
+            ->where('follow.is_hide','=',0)
+            ->offset($per_page * ( $page - 1 ))
+            ->limit($per_page)
+            ->orderBy('follow.updated_at','DESC')
+            ->get()
+            ->toArray();
+        $result = $this->login_user($result,$result_token->id);
+        return json_encode(['code'=>200,'data'=>$result]);
+
     }
     //关注列表
     public function follow_list(Request $request, CurlService $curlService){
@@ -399,43 +444,9 @@ class PersonalInfoController extends Controller
             ->orderBy('follow.created_at','DESC')
             ->get()
             ->toArray();
-        return json_encode(['code'=>200,'data'=>$result]);
 
-    }
-    //消息列表的关注
-    public function message_follow_list(Request $request, CurlService $curlService){
-        $token                       = $request->input('token');
-        $per_page                    = (int)$request->input( 'per_page', 10 );
-        $page                        = (int)$request->input( 'page', 1 );
-        $result_token                = $curlService->getToken($token);
+        $result = $this->login_user($result,$result_token->id);
 
-        if($token && !$result_token){
-            return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
-        }
-        $select_userid = $result_token ? $result_token->id : 0;
-        $result = DB::table('follow')
-            ->select([
-                'user.id as user_id',
-                'user.username',
-                'user.head_img',
-                'user.authen_status',
-                'user.authen_car_name',
-                'user.authen_brand_log',
-                'follow.id',
-                'follow.is_read',
-                'follow.is_hide',
-                'follow.mutual as is_mutual',
-            ])
-            ->leftJoin( 'user', 'follow.user_id', '=', 'user.id' )
-            ->where('follow.user_id','!=',$select_userid)
-            ->where('follow.followed_user_id','=',$select_userid)
-            ->where('follow.status','=',1)
-            ->where('follow.is_hide','=',0)
-            ->offset($per_page * ( $page - 1 ))
-            ->limit($per_page)
-            ->orderBy('follow.created_at','DESC')
-            ->get()
-            ->toArray();
         return json_encode(['code'=>200,'data'=>$result]);
 
     }
@@ -472,7 +483,70 @@ class PersonalInfoController extends Controller
             ->orderBy('follow.created_at','DESC')
             ->get()
             ->toArray();
+
+        $result = $this->login_user($result,$result_token->id);
+
+
         return json_encode(['code'=>200,'data'=>$result]);
+    }
+
+    public function login_user($result,$login_user_id){
+        //查询出当前登录账户所有的关注和粉丝
+        $all_follow=[];
+        $all_fans=[];
+        $results = DB::table('follow')
+            ->select([
+                'follow.user_id',
+                'follow.followed_user_id',
+            ])
+            ->where(function ($query) use ($login_user_id) {
+                $query->where('follow.user_id','=',$login_user_id);
+                $query->orWhere('follow.followed_user_id','=',$login_user_id);
+            })
+            ->where('follow.status','=',1)
+            ->get()
+            ->toArray();
+        foreach($results as $key =>$val){
+            $all_follow[]=$val->followed_user_id;
+            $all_fans[]=$val->user_id;
+        }
+
+        foreach($result as $key =>$val){
+
+            if(isset($val->user_id)){
+                //判断-被查看用户的粉丝/关注列表里如果有当前登录用户关注的
+                if(in_array($val->user_id,$all_follow)){
+                    $result[$key]->is_follow = 1;
+                }else{
+                    $result[$key]->is_follow = 0;
+                }
+
+                //判断-被查看用户的粉丝/关注列表里如果有当前登录的粉丝
+                if(in_array($val->user_id,$all_fans)){
+                    $result[$key]->is_fans = 1;
+                }else{
+                    $result[$key]->is_fans = 0;
+                }
+            }else{
+                //判断-被查看用户的粉丝/关注列表里如果有当前登录用户关注的
+                if(in_array($val['user_id'],$all_follow)){
+                    $result[$key]['is_follow'] = 1;
+                }else{
+                    $result[$key]['is_follow'] = 0;
+                }
+
+                //判断-被查看用户的粉丝/关注列表里如果有当前登录的粉丝
+                if(in_array($val['user_id'],$all_fans)){
+                    $result[$key]['is_fans'] = 1;
+                }else{
+                    $result[$key]['is_fans'] = 0;
+                }
+            }
+
+        }
+
+        return $result;
+
     }
 
     //在消息列表那里删除关注信息，修改库里字段
@@ -502,6 +576,19 @@ class PersonalInfoController extends Controller
         }else{
             DB::table('follow')->where('followed_user_id','=',$id)->update(['is_read'=>1]);
         }
+
+        return json_encode(['code'=>200]);
+    }
+    //已读点赞信息
+    public function read_like(Request $request, CurlService $curlService){
+        $token                       = $request->input('token');
+        $result_token                = $curlService->getToken($token);
+
+        if($token && !$result_token){
+            return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
+        }
+        DB::table('like')->where('to_userid','=',$result_token->id)->update(['is_read'=>1]);
+
 
         return json_encode(['code'=>200]);
     }
@@ -582,6 +669,14 @@ class PersonalInfoController extends Controller
 
         }
         return json_encode( [ 'message' => 'success','code'=>'200', 'data'=>$result ],JSON_UNESCAPED_UNICODE );
+    }
+
+    public function new_version(){
+        $results = DB::table('new_version')
+            ->get()
+            ->toArray();
+        return json_encode( [ 'message' => 'success','code'=>'200', 'data'=>$results ],JSON_UNESCAPED_UNICODE );
+
     }
 
 }

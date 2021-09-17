@@ -322,13 +322,17 @@ class LoginController extends Controller
         if($result_token){
             //是否关注
             $result_follow = DB::table('follow')
-                ->select(['mutual'])
                 ->where('user_id','=',$result_token->id)
                 ->where('followed_user_id','=',$user_id)
                 ->where('status','=',1)
                 ->first();
-            $user_info['follow'] = !empty($result_follow) ? 1 : 0;
-            $user_info['is_mutual'] = $user_info['follow'] ? $result_follow->mutual : 0;
+            $user_info['is_follow'] = !empty($result_follow) ? 1 : 0;
+            $result_follows = DB::table('follow')
+                ->where('user_id','=',$user_id)
+                ->where('followed_user_id','=',$result_token->id)
+                ->where('status','=',1)
+                ->first();
+            $user_info['is_fans'] = !empty($result_follows) ? 1 : 0;
 
             if($result_token->id == $user_id){
                 $where=['car_authen.user_id'=>$user_id];
@@ -393,7 +397,7 @@ class LoginController extends Controller
             }
         }
         //点赞咨询的数量
-        $user_info['like_count']          = DB::table('like')
+        $user_info['send_like_count']          = DB::table('like')
             ->where('like.type','=',1)
             ->where('like.status','=',1)
             ->where('like.from_userid','=',$user_id)
@@ -406,9 +410,10 @@ class LoginController extends Controller
 
         $publish_send_push = new PublishNewsController;
         $result = $publish_send_push->user_message_count($user_id);
-        $user_info['like_count'] = $result['like_count'];
+        $user_info['get_like_count'] = $result['like_count'];
         $user_info['follow_count'] = $result['follow_count'];
         $user_info['fans_count'] = $result['fans_count'];
+
         if(empty($user_info)){
             return json_encode( [ 'message' => '用户不存在','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }else{

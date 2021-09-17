@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\CurlService;
 use App\Services\UploadFileService;
 use App\Services\ImageService;
+use App\Http\Controllers\MoTo\PersonalInfoController;
 
 class PublishNewsController extends Controller
 {
@@ -166,7 +167,7 @@ class PublishNewsController extends Controller
 
     public function index( Request $request, CurlService $curlService, UploadFileService $uploadFileService ){
         $token              = $request->input('token');
-        $data['news_type']  = $request->input('news_type');
+        $data['news_type']  = $request->input('news_type');//0是发布动态。1是发布文章,2:视频,3:口碑,4:问答
         $result_token       = $curlService->getToken($token);
         if(!$result_token){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
@@ -1034,19 +1035,19 @@ class PublishNewsController extends Controller
         $page       = (int)$request->input( 'page', 1 );
 
         //是否关注
-        $follow_ids=[];
-        $mutual_ids=[];
-        $result_follow = DB::table('follow')
-            ->where('user_id','=',$user_id)
-            ->where('status','=',1)
-            ->get()
-            ->toArray();
-        foreach($result_follow as $key=>$val){
-            $follow_ids[$key]=$val->followed_user_id;
-            if($val->mutual==1){
-                $mutual_ids[] = $val->followed_user_id;
-            }
-        }
+//        $follow_ids=[];
+//        $mutual_ids=[];
+//        $result_follow = DB::table('follow')
+//            ->where('user_id','=',$user_id)
+//            ->where('status','=',1)
+//            ->get()
+//            ->toArray();
+//        foreach($result_follow as $key=>$val){
+//            $follow_ids[$key]=$val->followed_user_id;
+//            if($val->mutual==1){
+//                $mutual_ids[] = $val->followed_user_id;
+//            }
+//        }
 
         //当前用户被评论信息
         $comment_sql = DB::table('comment')
@@ -1128,10 +1129,12 @@ class PublishNewsController extends Controller
                     $result[$key]->is_author = 0;
                 }
                 //判断当前用户是否关注文章作者
-                $result[$key]->is_follow = in_array($val->user_id,$follow_ids)  ? 1 : 0;
+//                $result[$key]->is_follow = in_array($val->user_id,$follow_ids)  ? 1 : 0;
                 //判断当前用户和文章作者是否是互关状态
-                $result[$key]->is_mutual = in_array($val->user_id,$mutual_ids) ? 1 : 0;
+//                $result[$key]->is_mutual = in_array($val->user_id,$mutual_ids) ? 1 : 0;
             }
+        $personal_c = new PersonalInfoController();
+        $result = $personal_c->login_user($result,$user_id);
 
 
         return json_encode( [ 'message' => 'success','code'=>'200', 'data'=>$result, 'total'=>count($result) ],JSON_UNESCAPED_UNICODE );
@@ -1164,19 +1167,19 @@ class PublishNewsController extends Controller
         $page       = (int)$request->input( 'page', 1 );
 
         //是否关注
-        $follow_ids=[];
-        $mutual_ids=[];
-        $result_follow = DB::table('follow')
-            ->where('user_id','=',$user_id)
-            ->where('status','=',1)
-            ->get()
-            ->toArray();
-        foreach($result_follow as $key=>$val){
-            $follow_ids[$key]=$val->followed_user_id;
-            if($val->mutual==1){
-                $mutual_ids[] = $val->followed_user_id;
-            }
-        }
+//        $follow_ids=[];
+//        $mutual_ids=[];
+//        $result_follow = DB::table('follow')
+//            ->where('user_id','=',$user_id)
+//            ->where('status','=',1)
+//            ->get()
+//            ->toArray();
+//        foreach($result_follow as $key=>$val){
+//            $follow_ids[$key]=$val->followed_user_id;
+//            if($val->mutual==1){
+//                $mutual_ids[] = $val->followed_user_id;
+//            }
+//        }
 
         //文章点赞信息
         $publish = DB::table('like')
@@ -1269,7 +1272,6 @@ class PublishNewsController extends Controller
             ->limit($per_page)
             ->get()
             ->toArray();
-//        var_dump($result);die;
         //当天某一文章或评论或回复收到2个以上点赞时返回
         $today_like_type = $this->today_like_type($user_id);
         $res = [];
@@ -1296,9 +1298,9 @@ class PublishNewsController extends Controller
             $result[$key]->is_hide = $val->is_hide===null ? 1 : $val->is_hide;//0是没删除，null=1=删除
 
             //判断当前用户是否关注文章作者
-            $result[$key]->is_follow = in_array($val->user_id,$follow_ids)  ? 1 : 0;
+//            $result[$key]->is_follow = in_array($val->user_id,$follow_ids)  ? 1 : 0;
             //判断当前用户和文章作者是否是互关状态
-            $result[$key]->is_mutual = in_array($val->user_id,$mutual_ids) ? 1 : 0;
+//            $result[$key]->is_mutual = in_array($val->user_id,$mutual_ids) ? 1 : 0;
 
             $i = 0;
             $j = 0;
@@ -1342,6 +1344,8 @@ class PublishNewsController extends Controller
             $result[$key] = json_decode( json_encode( $result[$key] ),true) ;
 
         }
+        $personal_c = new PersonalInfoController();
+        $result = $personal_c->login_user($result,$user_id);
 
 
         return json_encode( [ 'message' => 'success','code'=>'200', 'data'=>$result, 'total'=>count($result) ],JSON_UNESCAPED_UNICODE );
@@ -1352,25 +1356,50 @@ class PublishNewsController extends Controller
     public function operation_read(Request $request, CurlService $curlService){
         $token                      = $request->input('token');
         $id                         = $request->input('id');//文章id
-        $type                       = $request->input('type');//all 全部已读
+        $type                       = $request->input('type');
         $result_token               = $curlService->getToken($token);
         if(!$result_token){
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
         $id = explode(",",$id);
-        if($type=='comment'){
-            DB::table('comment')->whereIn('id',$id)->update(['is_read'=>1]);
-        }else if($type=='reply'){
-            DB::table('reply')->whereIn('id',$id)->update(['is_read'=>1]);
-        }else if($type=='like'){
-            DB::table('like')->whereIn('id',$id)->update(['is_read'=>1]);
-        } else if($type=='all'){
-            DB::table('comment')->leftJoin('publish_list')->where('publish_news.user_id','=',$result_token->id)->update(['comment.is_read'=>1]);
-            DB::table('reply')->where('to_userid','=',$result_token->id)->update(['is_read'=>1]);
-            DB::table('like')->where('to_userid','=',$result_token->id)->update(['is_read'=>1]);
+        switch($type){
+            case 'comment':
 
+                DB::table('comment')->whereIn('id',$id)->update(['is_read'=>1]);
 
+                break;
+            case 'reply':
+
+                DB::table('reply')->whereIn('id',$id)->update(['is_read'=>1]);
+
+                break;
+            case 'like':
+
+                DB::table('like')->whereIn('id',$id)->update(['is_read'=>1]);
+
+                break;
+            case 'comment_all':
+
+                DB::table('comment')->leftJoin('publish_news','publish_news.id','=','comment.publish_id')->where('publish_news.user_id','=',$result_token->id)->update(['comment.is_read'=>1]);
+                DB::table('reply')->where('to_userid','=',$result_token->id)->update(['is_read'=>1]);
+
+                break;
+            case 'like_all':
+
+                DB::table('like')->where('to_userid','=',$result_token->id)->update(['is_read'=>1]);
+
+                break;
         }
+
+//        else if($type=='all'){
+//            DB::table('comment')->leftJoin('publish_news','publish_news.id','=','comment.publish_id')->where('publish_news.user_id','=',$result_token->id)->update(['comment.is_read'=>1]);
+//            DB::table('reply')->where('to_userid','=',$result_token->id)->update(['is_read'=>1]);
+//            DB::table('like')->where('to_userid','=',$result_token->id)->update(['is_read'=>1]);
+//
+//
+//        }
+
+
 
         return json_encode( [ 'message' => 'success','code'=>'200' ],JSON_UNESCAPED_UNICODE );
     }
@@ -1835,8 +1864,8 @@ class PublishNewsController extends Controller
     }
 
     public function user_message_count($user_id){
-        $result['like_count']       = DB::table('like')->where(["to_userid"=>$user_id])->count();//点赞总数
-        $result['follow_count']       = DB::table('follow')->where(["user_id"=>$user_id])->where(["status"=>1])->count();//关注数
+        $result['like_count']       = DB::table('like')->where('to_userid','=',$user_id)->where('from_userid','!=',$user_id)->count();//点赞总数
+        $result['follow_count']     = DB::table('follow')->where(["user_id"=>$user_id])->where(["status"=>1])->count();//关注数
         $result['fans_count']       = DB::table('follow')->where(["followed_user_id"=>$user_id])->where(["status"=>1])->count();//粉丝数
         $reply_count                = DB::table('reply')->where(["to_userid"=>$user_id])->count();//回复总数
         $result['comment_count']    = DB::table('comment')
@@ -1870,7 +1899,7 @@ class PublishNewsController extends Controller
             ->where("follow.followed_user_id",'=',$user_id)
             ->where("follow.user_id",'!=',$user_id)
             ->where("follow.status",'=',1)
-            ->orderBy('follow.created_at','DESC')
+            ->orderBy('follow.updated_at','DESC')
             ->first();//最后一次关注的用户
 
         $comment_info    = DB::table('comment')
@@ -1896,15 +1925,24 @@ class PublishNewsController extends Controller
             ->first();
         $result['last_comment_or_reply'] = strtotime(@$comment_info->created_at) > strtotime(@$reply_info->created_at) ? $comment_info : $reply_info;
 
-        //未读数量
-        $last_like_un_read_count =DB::table('like')->where(["status"=>1])->where(["to_userid"=>$user_id])->where(["is_read"=>0])->count();//未读点赞数
+        //点赞未读数量
+        $last_like_un_read_count =DB::table('like')
+            ->where('status','=',1)
+            ->where('to_userid','=',$user_id)
+            ->where('from_userid','!=',$user_id)
+            ->where('is_read','=',0)
+            ->count();//未读点赞数
         if($last_like_un_read_count){
 
             @$result['last_like']->un_read_count       = $last_like_un_read_count;
 
         }
 
-        $last_follow_un_read_count = DB::table('follow')->where(["followed_user_id"=>$user_id])->where(["status"=>1])->where(["is_read"=>0])->count();//未读关注数
+        $last_follow_un_read_count = DB::table('follow')
+            ->where(["followed_user_id"=>$user_id])
+            ->where(["status"=>1])
+            ->where(["is_read"=>0])
+            ->count();//未读关注数
         if($last_follow_un_read_count){
 
             @$result['last_follow']->un_read_count      = $last_follow_un_read_count;
@@ -1941,21 +1979,21 @@ class PublishNewsController extends Controller
             return json_encode( [ 'message' => 'token错误','code'=>'401' ],JSON_UNESCAPED_UNICODE );
         }
         //是否关注
-        $follow_ids=[];
-        $mutual_ids=[];
-        if($result_token){
-            $result_follow = DB::table('follow')
-                ->where('user_id','=',$result_token->id)
-                ->where('status','=',1)
-                ->get()
-                ->toArray();
-            foreach($result_follow as $key=>$val){
-                $follow_ids[$key]=$val->followed_user_id;
-                if($val->mutual==1){
-                    $mutual_ids[] = $val->followed_user_id;
-                }
-            }
-        }
+//        $follow_ids=[];
+//        $mutual_ids=[];
+//        if($result_token){
+//            $result_follow = DB::table('follow')
+//                ->where('user_id','=',$result_token->id)
+//                ->where('status','=',1)
+//                ->get()
+//                ->toArray();
+//            foreach($result_follow as $key=>$val){
+//                $follow_ids[$key]=$val->followed_user_id;
+//                if($val->mutual==1){
+//                    $mutual_ids[] = $val->followed_user_id;
+//                }
+//            }
+//        }
 
 
         $like_list          = DB::table('like')
@@ -1969,12 +2007,15 @@ class PublishNewsController extends Controller
             ->limit($per_page)
             ->get()
             ->toArray();
-        foreach($like_list as $key=>$val){
-            //判断当前用户是否关注文章作者
-            $like_list[$key]->is_follow = in_array($val->user_id,$follow_ids)  ? 1 : 0;
-            //判断当前用户和文章作者是否是互关状态
-            $like_list[$key]->is_mutual = in_array($val->user_id,$mutual_ids) ? 1 : 0;
-        }
+//        foreach($like_list as $key=>$val){
+//            //判断当前用户是否关注文章作者
+//            $like_list[$key]->is_follow = in_array($val->user_id,$follow_ids)  ? 1 : 0;
+//            //判断当前用户和文章作者是否是互关状态
+//            $like_list[$key]->is_mutual = in_array($val->user_id,$mutual_ids) ? 1 : 0;
+//        }
+
+        $personal_c = new PersonalInfoController();
+        $like_list = $personal_c->login_user($like_list,$result_token->id);
         return json_encode( [ 'message' => 'success','code'=>'200', 'data'=>$like_list ],JSON_UNESCAPED_UNICODE );
 
 
@@ -2026,7 +2067,6 @@ class PublishNewsController extends Controller
             ->where('like.status','=',1)
             ->where('like.type','=',1)
             ->where('like.from_userid','=',$user_id)
-            ->where('like.to_userid','!=',$user_id)
             ->offset($per_page * ( $page - 1 ))
             ->limit($per_page)
             ->orderBy('like.created_at','DESC')

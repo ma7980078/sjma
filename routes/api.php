@@ -42,7 +42,7 @@ Route::post( 'publishNews/favoritesNewsList', 'MoTo\PublishNewsController@favori
 Route::post( 'publishNews/setUserFavorites', 'MoTo\PublishNewsController@setUserFavorites' )->name( 'publishNews.setUserFavorites' );//用户收藏文章/取消收藏
 Route::post( 'publishNews/comment', 'MoTo\PublishNewsController@comment' )->name( 'publishNews.comment' );//用户评论
 Route::post( 'publishNews/reply', 'MoTo\PublishNewsController@reply' )->name( 'publishNews.comment' );//用户回复
-Route::post( 'publishNews/comment_list', 'MoTo\PublishNewsController@comment_list' )->name( 'publishNews.comment_list' );//评论列表
+Route::match( [ 'GET', 'POST' ], 'publishNews/comment_list', 'MoTo\PublishNewsController@comment_list' )->name( 'publishNews.comment_list' );//评论列表
 Route::post( 'publishNews/reply_list', 'MoTo\PublishNewsController@reply_list' )->name( 'publishNews.reply_list' );//回复列表
 Route::post( 'publishNews/delete', 'MoTo\PublishNewsController@delete' )->name( 'publishNews.delete' );//删除
 Route::post( 'publishNews/user_comment_list', 'MoTo\PublishNewsController@user_comment_list' )->name( 'publishNews.user_comment_list' );//查询用户被评论被回复列表
@@ -80,6 +80,7 @@ Route::post( 'PersonalInfo/message_follow_list', 'MoTo\PersonalInfoController@me
 Route::post( 'PersonalInfo/delete_message_follow', 'MoTo\PersonalInfoController@delete_message_follow' )->name( 'PersonalInfo.delete_message_follow' );//在消息列表那里删除关注信息，修改库里字段
 Route::post( 'PersonalInfo/read_follow', 'MoTo\PersonalInfoController@read_follow' )->name( 'PersonalInfo.read_follow' );//已读关注信息
 Route::post( 'PersonalInfo/search_all', 'MoTo\PersonalInfoController@search_all' )->name( 'PersonalInfo.search_all' );//搜索
+Route::post( 'PersonalInfo/read_like', 'MoTo\PersonalInfoController@read_like' )->name( 'PersonalInfo.read_like' );//点赞已读
 
 
 
